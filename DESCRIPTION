@@ -1,0 +1,33 @@
+Package: postuR
+Title: Posture Classification and Activity Measures for Zio XT Patch (trademark iRhythm) Accelerometer and ECG Data.
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Lacey",
+           family = "Etzkorn",
+           role = c("aut", "cre"), 
+           email = "etzkornlacey15@gmail.com",
+           comment = c(ORCID = "0000-0001-7107-2763"))
+Description: This package includes functions to process accelerometer data from the Zio XT Patch. 
+	It creates summary measures of actigraphy and posture.
+License: GPL-3
+Encoding: UTF-8
+LazyData: false
+RoxygenNote: 7.1.1
+Depends: R (>= 2.10)
+Imports: 
+    tidyverse,
+    dplyr,
+    lubridate,
+    meanShiftR,
+    zoo,
+    pracma,
+    purrr,
+    accelerometry,
+    tidyr,
+    rlang, 
+    stringr,
+    fastcluster
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
