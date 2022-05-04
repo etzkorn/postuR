@@ -9,12 +9,13 @@
 #'
 mad <- function(x, y, z, roll = FALSE, window = 90){
 	if(roll == FALSE){
-		m <- mean(euclid.norm(x,y,z))
-		mean( abs( euclid.norm(x,y,z) - m) ) %>% return()
+		m <- mean(postuR:::euclid.norm(x,y,z))
+		mad <- mean( abs( postuR:::euclid.norm(x,y,z) - m) )
+		return(mad)
 	}else if(roll == TRUE){
-		m0 <- mean(euclid.norm(x,y,z))
-		m <- zoo::rollmean(euclid.norm(x,y,z), k = window, fill = m0)
-		mad <- zoo::rollmean( abs( euclid.norm(x,y,z) - m), k = window, fill = 0)
+		m0 <- mean(postuR:::euclid.norm(x,y,z))
+		m <- zoo::rollmean(postuR:::euclid.norm(x,y,z), k = window, fill = m0)
+		mad <- zoo::rollmean( abs( postuR:::euclid.norm(x,y,z) - m), k = window, fill = 0)
 		return(mad)
 	}
 }
