@@ -1,5 +1,5 @@
 Package: postuR
-Title: Posture Classification and Activity Measures for Zio XT Patch (trademark iRhythm) Accelerometer and ECG Data.
+Title: Posture Classification and Activity Measures for Zio XT (trademark iRhythm) Patch Accelerometer.
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Lacey",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"), 
            email = "etzkornlacey15@gmail.com",
            comment = c(ORCID = "0000-0001-7107-2763"))
-Description: This package includes functions to process accelerometer data from the Zio XT Patch. 
+Description: This package includes functions to process accelerometer data from the Zio XT (trademark iRhythm) Patch. 
 	It creates summary measures of actigraphy and posture.
 License: GPL-3
 Encoding: UTF-8

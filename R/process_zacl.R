@@ -3,7 +3,24 @@
 #' @description Takes the raw Zio accelerometer file and processes it into adjacent intervals of length epoch.seconds.
 #'
 #' @param data Data frame containing the accelerometer data. Should include variables time, x, y, z.
-#' @param epoch.seconds Duration (seconds) of interval in which to summarise the data. Options include 10, 30, 60, 300, or "none". If epoch.seconds is "none", then data is processed at the original frequency of the data.#'
+#' If a wear indicator is included among the columns and check.nonwear==T,
+#' then these time points will be given the orientation c(0,0,1) so the nonwear algorithm may pick them up
+#' if wear bouts are longer than nonwear.window.
+#' @param epoch.seconds Duration (seconds) of interval in which to summarise the data.
+#' Options include 10, 30, 60, 300, or "none".
+#' If epoch.seconds is "none", then data is processed at the original frequency of the data.#'
+#' @param p percentile for defining high-acceleration point. Used in estimation of upright orientation.
+#' @param k ratio cutoff for detecting removal/rotation/reattachment.
+#' @param theta.star Threshold for inclination for determining whether a point is recumbent or upright.
+#' @param check.nonwear Boolean. Should non-wear be screened for?
+#' @param check.device.rotation Boolean. Should device removal/rotation/reattachment be screened for?
+#' @param nonwear.window Window length (units of sampling points on raw data scale) representing minimum possible
+#' nonwear period. Passed to accelerometry::weartime. Defaults to 16920, about 3 hours of Zio wear time.
+#' @param nonwear.tol Number of allowed changes in window length to be considered nonwear. Defaults to 10.
+#' @param minimum.wear.bout Window length (units of sampling points on raw data scale) representing minimum possible
+#' wear period. Defaults to 135360, about 24 hours of Zio wear time.
+#' @param cluster Clustering algorithm to create posture groups. Either "meanShift", "ward", "centroid", or "none".
+#'
 #' @return A data frame with epoch level activity summaries.
 #' For each time stamp in the resulting data frame, the summary corresponds to the following epoch.seconds
 #' (i.e. 22/9/19 10:50:00 corresponds to the time interval from 22/9/19 10:50:00 to 22/9/19 10:54:59
@@ -21,52 +38,68 @@
 #'
 #' \item{x,y,z}{Median accelerations measured along each axis during an epoch.}
 #'
-#' \item{clustering}{Clustering algorithm to create posture groups.
-#' Either "meanShift", "ward", or "centroid".}
-#'
 #' @export
-process.zacl <- function(data, p = 0.95, k = 0.98, theta.star = 45, epoch.seconds = 60,
-		 nonwear.window=3*94*60, nonwear.tol=10, minimum.wear.bout=94*60*24,
-		 cluster = "meanShift"){
+process.zacl <- function(
+	data,
+	epoch.seconds = 60,
+	p = 0.95, k = 0.98, theta.star = 45,
+	check.nonwear = T, check.device.rotation = T,
+	nonwear.window=3*94*60, nonwear.tol=10, minimum.wear.bout=94*60*24,
+	cluster = "meanShift"
+){
       ### Stop if epoch minutes is not a valid length
       if(!epoch.seconds %in% c(10, 30, 60, 300) & !epoch.seconds == "none"){
             stop("epoch.seconds must be 10, 30, 60, 300, or 'none'")
       }else{
-      	    if(epoch.seconds == 300){
-		          round.unit = lubridate::minutes(5)
-	        }else round.unit = lubridate::seconds(epoch.seconds)
+      	if(epoch.seconds == 300){
+      		round.unit = lubridate::minutes(5)
+      	}else round.unit = lubridate::seconds(epoch.seconds)
       }
 
       ### Identify non-wear (3 consecutive hours with fewer than 10 changes)
-      data <- postuR::check.nonwear(data,
-      							  filter = F,
-      							  window = nonwear.window,
-      							  tol=nonwear.tol,
-      							  minimum.wear.bout = minimum.wear.bout)
+      if(wear %in% colnames(data)){
+          data$x[!df$wear] <- 0
+          data$y[!df$wear] <- 0
+          data$z[!df$wear] <- 1
+      }
 
-      if(nrow(data) == 0){
-      	stop("No wear bout is required length.")
+      if(check.nonwear | wear %in% colnames(data)){
+          	data <- postuR::check.nonwear(
+          		data,
+          		filter = F,
+          		window = nonwear.window,
+          		tol=nonwear.tol,
+          		minimum.wear.bout = minimum.wear.bout)
+    	  if(nrow(data) == 0){
+          		stop("No wear bout is required length.")
+    	  }
+      }else{
+          data$wear.bout <- 1
+          data$wear <- 1
       }
 
       ### FIND REMOVAL TIME POINT
       # if we deem device is device is removed within any wear bout
-      # separate wear bout into two wearbout
-      data <-
-	      	data %>%
-	      	dplyr::select(-bout.length) %>%
-	      	dplyr::filter(wear.bout != 0) %>%
-	      	tidyr::nest(data = c(time, x, y, z)) %>%
-	      	dplyr::mutate(
-	      		removal = purrr::map(data, ~postuR::calculate.removal.time(data = ., p=p)),
-	      		data = purrr::map2(data, removal,
-	      						   ~ dplyr::mutate(.x, wear.bout2 = (.y$r.ratio < k)* (time > .y$time)))) %>%
-	      	dplyr::select(-removal) %>%
-	      	tidyr::unnest(data) %>%
-	      	dplyr::mutate(wear.bout = wear.bout + 0.5*wear.bout2) %>%
-	      	dplyr::select(-wear.bout2) %>%
-	      	dplyr::group_by(wear.bout)%>%
-	      	dplyr::filter(n() > minimum.wear.bout) %>%
-	      	dplyr::ungroup()
+      # separate wear bout into two wear bouts
+      if(check.device.rotation){
+        	data <-
+        		data %>%
+        		dplyr::select(-bout.length) %>%
+        		dplyr::filter(wear.bout != 0) %>%
+        		tidyr::nest(data = c(time, x, y, z)) %>%
+        		dplyr::mutate(
+        			removal = purrr::map(data, ~postuR::calculate.removal.time(data = ., p=p)),
+        			data = purrr::map2(
+        			    data, removal,
+        			    ~ dplyr::mutate(.x, wear.bout2 = (.y$r.ratio < k)* (time > .y$time)))) %>%
+        		dplyr::select(-removal) %>%
+        		tidyr::unnest(data) %>%
+        		dplyr::mutate(wear.bout = wear.bout + 0.5*wear.bout2) %>%
+        		dplyr::select(-wear.bout2) %>%
+        		dplyr::group_by(wear.bout)%>%
+        		dplyr::filter(n() > minimum.wear.bout) %>%
+        		dplyr::ungroup()
+      }
 
       if(nrow(data) == 0){
       	    stop("No wear bout is required length.")
