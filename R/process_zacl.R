@@ -3,9 +3,6 @@
 #' @description Takes the raw Zio accelerometer file and processes it into adjacent intervals of length epoch.seconds.
 #'
 #' @param data Data frame containing the accelerometer data. Should include variables time, x, y, z.
-#' If a wear indicator is included among the columns and check.nonwear==T,
-#' then these time points will be given the orientation c(0,0,1) so the nonwear algorithm may pick them up
-#' if wear bouts are longer than nonwear.window.
 #' @param epoch.seconds Duration (seconds) of interval in which to summarise the data.
 #' Options include 10, 30, 60, 300, or "none".
 #' If epoch.seconds is "none", then data is processed at the original frequency of the data.#'
@@ -17,6 +14,9 @@
 #' @param nonwear.window Window length (units of sampling points on raw data scale) representing minimum possible
 #' nonwear period. Passed to accelerometry::weartime. Defaults to 16920, about 3 hours of Zio wear time.
 #' @param nonwear.tol Number of allowed changes in window length to be considered nonwear. Defaults to 10.
+#' @param nonwear.tol.upper Maximum allowable sum of change in axis gravitational units in any window of non-wear.
+#' To be passed to accelerometry::weartime.
+#' Default of NULL is equivalent to zero.
 #' @param minimum.wear.bout Window length (units of sampling points on raw data scale) representing minimum possible
 #' wear period. Defaults to 135360, about 24 hours of Zio wear time.
 #' @param cluster Clustering algorithm to create posture groups. Either "meanShift", "ward", "centroid", or "none".
@@ -44,7 +44,7 @@ process.zacl <- function(
 	epoch.seconds = 60,
 	p = 0.95, k = 0.98, theta.star = 45,
 	check.nonwear = T, check.device.rotation = T,
-	nonwear.window=3*94*60, nonwear.tol=10, minimum.wear.bout=94*60*24,
+	nonwear.window=3*94*60, nonwear.tol=10, nonwear.tol.upper = NULL, minimum.wear.bout=94*60*24,
 	cluster = "meanShift"
 ){
       ### Stop if epoch minutes is not a valid length
@@ -57,18 +57,13 @@ process.zacl <- function(
       }
 
       ### Identify non-wear (3 consecutive hours with fewer than 10 changes)
-      if(wear %in% colnames(data)){
-          data$x[!df$wear] <- 0
-          data$y[!df$wear] <- 0
-          data$z[!df$wear] <- 1
-      }
-
-      if(check.nonwear | wear %in% colnames(data)){
+      if(check.nonwear){
           	data <- postuR::check.nonwear(
           		data,
           		filter = F,
           		window = nonwear.window,
           		tol=nonwear.tol,
+          		tol.upper = nonwear.tol.upper,
           		minimum.wear.bout = minimum.wear.bout)
     	  if(nrow(data) == 0){
           		stop("No wear bout is required length.")
@@ -76,6 +71,7 @@ process.zacl <- function(
       }else{
           data$wear.bout <- 1
           data$wear <- 1
+          data$bout.length <- 0
       }
 
       ### FIND REMOVAL TIME POINT
