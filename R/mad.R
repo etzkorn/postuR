@@ -10,8 +10,8 @@
 mad <- function(x, y, z, roll = FALSE, window = 90){
 	if(roll == FALSE){
 		m <- mean(postuR:::euclid.norm(x,y,z))
-		mad <- mean( abs( postuR:::euclid.norm(x,y,z) - m) )
-		return(mad)
+		mad.out <- mean( abs( postuR:::euclid.norm(x,y,z) - m) )
+		return(mad.out)
 	}else if(roll == TRUE){
 		m0 <- mean(postuR:::euclid.norm(x,y,z))
 		m <- zoo::rollmean(postuR:::euclid.norm(x,y,z), k = window, fill = m0)

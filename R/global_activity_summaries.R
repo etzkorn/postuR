@@ -24,33 +24,40 @@
 #'
 #' @export
 
-global.activity.summaries <- function(data, epoch.seconds = 60){
+global.activity.summaries <- function(
+        data, epoch.seconds = 60, sedentary = 0.0074, light = 0.0569){
 	data <-
 	data %>%
-	# generate new epoch-level activity summaries
-	dplyr::mutate(time = lubridate::as_datetime(.data$time),
+
+	# generate time bins
+	dplyr::mutate(
+	    time = lubridate::as_datetime(.data$time),
 		minute.bin = lubridate::hour(.data$time)*60 + lubridate::minute(.data$time),
-	       hour.bin = lubridate::hour(lubridate::floor_date(.data$time, unit = lubridate::hours(2))),
-	       day.bin = lubridate::floor_date(.data$time, unit = lubridate::days(1)))
+	    hour.bin = lubridate::hour(lubridate::floor_date(.data$time, unit = lubridate::hours(2))),
+	    day.bin = lubridate::floor_date(.data$time, unit = lubridate::days(1))
+	)
 
 	# meta data
 	meta <-
 		data %>%
-		dplyr::summarise(start = min(time),
-		          end = max(time),
-		          epoch.seconds = difftime(time[2], time[1], units = "secs") %>% as.numeric,
-		          days = difftime(end, start, units = "days") %>% as.numeric,
-		          wear.days = ifelse(sum(wear) ==0, days, sum(wear)*epoch.seconds/60/1440),
-		          wear.bout.count = length(unique(wear.bout)),
-			     .groups = "drop")
+		dplyr::summarise(
+		    start = min(time),
+		    end = max(time),
+		    epoch.seconds = difftime(time[2], time[1], units = "secs") %>% as.numeric,
+		    days = difftime(end, start, units = "days") %>% as.numeric,
+		    wear.days = ifelse(sum(wear) ==0, days, sum(wear)*epoch.seconds/60/1440),
+		    wear.bout.count = length(unique(wear.bout)),
+		    .groups = "drop"
+		)
 
 	# generate hour-binned summaries
 	hour.level <-
 		data %>%
 		dplyr::filter(wear == 1) %>%
 		dplyr::group_by(hour.bin) %>%
-		dplyr::summarise(mad = mean(mad, na.rm=T),
-			     .groups = "drop") %>%
+		dplyr::summarise(
+		    mad = mean(mad, na.rm=T),
+		    .groups = "drop") %>%
 		dplyr::select(hour.bin, mad) %>%
 		tidyr::gather(key = "var", value = "value", -hour.bin) %>%
 		tidyr::unite(col = var, var, hour.bin) %>%
@@ -64,15 +71,25 @@ global.activity.summaries <- function(data, epoch.seconds = 60){
 	global.level <- data %>%
 		dplyr::filter(wear == 1) %>%
 		dplyr::group_by(minute.bin) %>%
-		dplyr::summarise(mad = mean(mad, na.rm=T),
-		                 down = mean(down, na.rm=T),
-			     .groups = "drop") %>%
+	    #create diurnal profile
+		dplyr::summarise(
+		    mad = mean(mad, na.rm=T),
+		    down = mean(down, na.rm=T),
+		    st = mean(mad <= sedentary, na.rm = T),
+		    lipa = mean(mad <= light & mad > sedentary, na.rm = T),
+		    mvpa = mean(mad > light, na.rm = T),
+			.groups = "drop") %>%
 		dplyr::ungroup() %>%
-		dplyr::summarise(mad = mean(mad, na.rm=T),
-			     down = mean(down, na.rm=T))
+	    #summarize across day
+		dplyr::summarise(
+		    mad = mean(mad, na.rm=T),
+		    down = mean(down, na.rm=T)*24,
+		    st = mean(st, na.rm = T)*24,
+		    lipa = mean(lipa, na.rm = T)*24,
+		    mvpa = mean(lipa, na.rm = T)*24)
 
 	# generate day-binned (M10, and L6)
-	#day.level <- data %>%
+	# day.level <- data %>%
 	#	dplyr::filter(wear == 1) %>%
 	#	dplyr::group_by(day.bin) %>%
 	#	dplyr::filter(n() > 10*60*60/epoch.seconds)
@@ -97,7 +114,7 @@ global.activity.summaries <- function(data, epoch.seconds = 60){
 	#}
 
 	# fragmentation measures
-	#frag <- ActFrag::fragmentation(x = as.integer(data$mad >= 0.012),
+	# frag <- ActFrag::fragmentation(x = as.integer(data$mad >= 0.012),
 	#		  thresh = 1,
 	#		  w = data$time.group != 0,
 	#		  metrics = "all",

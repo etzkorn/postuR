@@ -18,6 +18,9 @@ rotate.data <- function(data, from, to){
 		cat("from and to must have length 3.")
 		return(NULL)
 	}
+	
+	from <- from/sqrt(sum(from^2))
+	to <- to/sqrt(sum(to^2))
 
 	# calculate rotation matrix
 	v = pracma::cross(from,to)

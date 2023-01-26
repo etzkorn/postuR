@@ -43,8 +43,8 @@ process.zacl <- function(
 	data,
 	epoch.seconds = 60,
 	p = 0.95, k = 0.98, theta.star = 45,
-	check.nonwear = T, check.device.rotation = T,
-	nonwear.window=3*94*60, nonwear.tol=10, nonwear.tol.upper = NULL, minimum.wear.bout=94*60*24,
+	screen.nonwear = T, check.device.rotation = T,
+	nonwear.window=3*94*60, nonwear.tol=10, nonwear.tol.upper = 0, minimum.wear.bout=94*60*24,
 	cluster = "meanShift"
 ){
       ### Stop if epoch minutes is not a valid length
@@ -57,7 +57,7 @@ process.zacl <- function(
       }
 
       ### Identify non-wear (3 consecutive hours with fewer than 10 changes)
-      if(check.nonwear){
+      if(screen.nonwear){
           	data <- postuR::check.nonwear(
           		data,
           		filter = F,
@@ -121,10 +121,11 @@ process.zacl <- function(
           		data,
           		~ dplyr::group_by(.,time) %>%
           			dplyr::summarise(
-          				mad = mad(x,y,z),
+          				mad = mean(abs(postuR:::euclid.norm(x,y,z) - mean(postuR:::euclid.norm(x,y,z)))),
           				x = median(x),
           				y = median(y),
-          				z = median(z)) %>%
+          				z = median(z),
+          				.groups = "drop") %>%
           			dplyr::mutate(
           				r = ifelse(postuR:::euclid.norm(x,y,z)==0,
           						   0.00001,
