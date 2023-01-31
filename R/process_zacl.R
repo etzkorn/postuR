@@ -45,7 +45,7 @@ process.zacl <- function(
 	p = 0.95, k = 0.98, theta.star = 45,
 	screen.nonwear = T, check.device.rotation = T,
 	nonwear.window=3*94*60, nonwear.tol=10, nonwear.tol.upper = 0, minimum.wear.bout=94*60*24,
-	cluster = "meanShift"
+	cluster = "ward"
 ){
       ### Stop if epoch minutes is not a valid length
       if(!epoch.seconds %in% c(10, 30, 60, 300) & !epoch.seconds == "none"){
@@ -184,5 +184,6 @@ process.zacl <- function(
           dplyr::select(-data, -top, -cluster)%>%
           tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
           dplyr::select(-down0, -p.down)%>%
-          dplyr::arrange(time)
+          dplyr::arrange(time)%>%
+          dplyr::mutate(wear = as.numeric(wear.bout!=0))
 }
