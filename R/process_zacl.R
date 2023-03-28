@@ -211,9 +211,10 @@ process.zacl <- function(
           min.data %>%
               dplyr::select(-data, -top) %>%
               tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
-              dplyr::rename(down = as.numeric(down0)) %>%
               dplyr::arrange(time)%>%
-              dplyr::mutate(wear = as.numeric(wear.bout!=0))
+              dplyr::mutate(wear = as.numeric(wear.bout!=0),
+                            down = as.numeric(down0)) %>%
+              dplyr::select(-down0)
       }else{
           # adjust recumbent indicator using clusters
           min.data %>%
