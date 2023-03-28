@@ -5,9 +5,10 @@
 #' @param y Second accelerometer channel.
 #' @param z Third accelerometer channel.
 #' @param roll Should mad be calculated using a sliding window?
-#' @param window What number of observations should be used in the sliding window? Default is 90, as Zio measures approximately 90 observations per minute.
+#' @param window What number of observations should be used in the sliding window?
+#' Default is 94, as Zio measures approximately 94 observations per minute.
 #'
-mad <- function(x, y, z, roll = FALSE, window = 90){
+mad <- function(x, y, z, roll = FALSE, window = 94){
 	if(roll == FALSE){
 		m <- mean(postuR:::euclid.norm(x,y,z))
 		mad.out <- mean( abs( postuR:::euclid.norm(x,y,z) - m) )

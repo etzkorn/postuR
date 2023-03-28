@@ -20,6 +20,7 @@
 #' @param minimum.wear.bout Window length (units of sampling points on raw data scale) representing minimum possible
 #' wear period. Defaults to 135360, about 24 hours of Zio wear time.
 #' @param cluster Clustering algorithm to create posture groups. Either "meanShift", "ward", "centroid", or "none".
+#' Choosing "none" will dramatically reduce processing time.
 #'
 #' @return A data frame with epoch level activity summaries.
 #' For each time stamp in the resulting data frame, the summary corresponds to the following epoch.seconds
@@ -43,9 +44,13 @@ process.zacl <- function(
 	data,
 	epoch.seconds = 60,
 	p = 0.95, k = 0.98, theta.star = 45,
-	screen.nonwear = T, check.device.rotation = T,
-	nonwear.window=3*94*60, nonwear.tol=10, nonwear.tol.upper = 0, minimum.wear.bout=94*60*24,
-	cluster = "ward"
+	screen.nonwear = T,
+	check.device.rotation = T,
+	nonwear.window=3*94*60,
+	nonwear.tol=10,
+	nonwear.tol.upper = 0,
+	minimum.wear.bout=94*60*24,
+	cluster = "none"
 ){
       ### Stop if epoch minutes is not a valid length
       if(!epoch.seconds %in% c(10, 30, 60, 300) & !epoch.seconds == "none"){
@@ -170,20 +175,30 @@ process.zacl <- function(
       		    	fastcluster::hclust.vector(method = "ward", metric = "euclidean") %>%
       		    	cutree(k = 5))
       }
-       # adjust recumbent indicator using clusters
-      min.data %>%
-          dplyr::mutate(min.data = purrr::map2(
-              min.data, cluster,
-              ~ dplyr::mutate(.x, cluster = .y)%>%
-                  dplyr::group_by(cluster) %>%
-                  dplyr:: mutate(
-                      p.down = mean(down0),
-                      down = as.integer(p.down > .5 | down0 == 1)) %>%
-                  dplyr::ungroup() %>%
-                  dplyr::arrange(time))) %>%
-          dplyr::select(-data, -top, -cluster)%>%
-          tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
-          dplyr::select(-down0, -p.down)%>%
-          dplyr::arrange(time)%>%
-          dplyr::mutate(wear = as.numeric(wear.bout!=0))
+
+      if(cluster=="none"){
+          min.data %>%
+              dplyr::select(-data, -top) %>%
+              tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
+              dplyr::rename(down = down0) %>%
+              dplyr::arrange(time)%>%
+              dplyr::mutate(wear = as.numeric(wear.bout!=0))
+      }else{
+          # adjust recumbent indicator using clusters
+          min.data %>%
+              dplyr::mutate(min.data = purrr::map2(
+                  min.data, cluster,
+                  ~ dplyr::mutate(.x, cluster = .y)%>%
+                      dplyr::group_by(cluster) %>%
+                      dplyr:: mutate(
+                          p.down = mean(down0),
+                          down = as.integer(p.down > .5 | down0 == 1)) %>%
+                      dplyr::ungroup() %>%
+                      dplyr::arrange(time))) %>%
+              dplyr::select(-data, -top, -cluster) %>%
+              tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
+              dplyr::select(-down0, -p.down) %>%
+              dplyr::arrange(time)%>%
+              dplyr::mutate(wear = as.numeric(wear.bout!=0))
+      }
 }
