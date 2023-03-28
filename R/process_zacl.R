@@ -135,7 +135,8 @@ process.zacl <- function(
                   ry= double(),
                   rz= double()
               )
-              }
+              )
+      }
 
       ### (3) GENERATE EPOCH-LEVEL DATA
       min.data <-
@@ -182,7 +183,7 @@ process.zacl <- function(
                 min.data, top,
                 ~postuR:::rotate.data(select(.x, x,y,z), from = .y, to = c(0,0,1)))
             ) %>%
-          dplyr::ungroup
+          dplyr::ungroup()
 
       # (4) ADJUST POSTURE LABELS WITH CLUSTERING (if applicable)
       if(cluster=="meanShift"){
@@ -210,7 +211,7 @@ process.zacl <- function(
           min.data %>%
               dplyr::select(-data, -top) %>%
               tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
-              dplyr::rename(down = down0) %>%
+              dplyr::rename(down = as.numeric(down0)) %>%
               dplyr::arrange(time)%>%
               dplyr::mutate(wear = as.numeric(wear.bout!=0))
       }else{
