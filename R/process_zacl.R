@@ -61,7 +61,7 @@ process.zacl <- function(
       	}else round.unit = lubridate::seconds(epoch.seconds)
       }
 
-      ### Identify non-wear (3 consecutive hours with fewer than 10 changes)
+      ### (1) IDENTIFY NON-WEAR (3 consecutive hours with fewer than 10 changes)
       if(screen.nonwear){
           	data <- postuR::check.nonwear(
           		data,
@@ -71,7 +71,23 @@ process.zacl <- function(
           		tol.upper = nonwear.tol.upper,
           		minimum.wear.bout = minimum.wear.bout)
     	  if(nrow(data) == 0){
-          		stop("No wear bout is required length.")
+          	  warning("No wear bout is required length.")
+    	      return(
+    	          tibble(
+    	              wear.bout = double(),
+    	              time = lubridate::ymd_hms(),
+    	              mad = double(),
+    	              x = double(),
+    	              y= double(),
+    	              z= double(),
+    	              r= double(),
+    	              theta= double(),
+    	              down = logical(),
+    	              rx= double(),
+    	              ry= double(),
+    	              rz= double()
+    	          )
+    	      )
     	  }
       }else{
           data$wear.bout <- 1
@@ -79,7 +95,7 @@ process.zacl <- function(
           data$bout.length <- 0
       }
 
-      ### FIND REMOVAL TIME POINT
+      ### (2) FIND REMOVAL TIME POINTS
       # if we deem device is device is removed within any wear bout
       # separate wear bout into two wear bouts
       if(check.device.rotation){
@@ -103,11 +119,25 @@ process.zacl <- function(
       }
 
       if(nrow(data) == 0){
-      	    stop("No wear bout is required length.")
-      }
+          warning("No wear bout is required length.")
+          return(
+              tibble(
+                  wear.bout = double(),
+                  time = lubridate::ymd_hms(),
+                  mad = double(),
+                  x = double(),
+                  y= double(),
+                  z= double(),
+                  r= double(),
+                  theta= double(),
+                  down = logical(),
+                  rx= double(),
+                  ry= double(),
+                  rz= double()
+              )
+              }
 
-      ### EPOCH DATA
-
+      ### (3) GENERATE EPOCH-LEVEL DATA
       min.data <-
       	data %>%
       	dplyr::mutate(time = lubridate::floor_date(time, unit = round.unit)) %>%
@@ -117,11 +147,11 @@ process.zacl <- function(
       	dplyr::group_by(wear.bout) %>%
       	tidyr::nest() %>%
       	dplyr::mutate(
-      	    # Estimate upright orientation
+      	    # (3a) Estimate upright orientation
       	    top = purrr::map(
           		data,
           		~postuR:::find.top(.,p=p)),
-      	    # Estimate Epoch-Specific Mean Absolute Deviation, Axis Medians
+      	    # (3b) Estimate Epoch-Specific Mean Absolute Deviation, Axis Medians
       	    min.data = purrr::map(
           		data,
           		~ dplyr::group_by(.,time) %>%
@@ -140,20 +170,21 @@ process.zacl <- function(
           				z = z/r
           			) %>%
           			dplyr::arrange(time)),
-            # Estimate Angle of inclination
+            # (3c) Estimate Angle of inclination
             min.data = purrr::map2(
               	    min.data, top,
               	    ~dplyr::mutate(
               	        .x,
               	        theta = 180/pi*acos((x*.y["x"] + y*.y["y"] + z*.y["z"])/sqrt(sum(.y^2))),
               	        down0 = theta >= (theta.star))),
-            # Add rotated data
+            # (3d) Add rotated data for convenience plotting
             rdata = purrr::map2(
                 min.data, top,
                 ~postuR:::rotate.data(select(.x, x,y,z), from = .y, to = c(0,0,1)))
-            )
+            ) %>%
+          dplyr::ungroup
 
-      # derive mean shift clusters
+      # (4) ADJUST POSTURE LABELS WITH CLUSTERING (if applicable)
       if(cluster=="meanShift"){
       min.data$cluster = purrr::map(min.data$min.data,
       		 ~ meanShiftR::meanShift(queryData = (.[,c("x","y","z")]) %>% as.matrix(),
@@ -175,7 +206,6 @@ process.zacl <- function(
       		    	fastcluster::hclust.vector(method = "ward", metric = "euclidean") %>%
       		    	cutree(k = 5))
       }
-
       if(cluster=="none"){
           min.data %>%
               dplyr::select(-data, -top) %>%
