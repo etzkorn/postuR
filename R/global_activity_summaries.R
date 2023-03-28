@@ -4,6 +4,9 @@
 #' @param epoch.seconds How many seconds does each row in the "data" argument correspond to?
 #' @param inactive Upper bound activity intensity cutpoint for inactivity category from mean absolute deviation (gravitational units).
 #' @param light Upper bound activity intensity cutpoint for light activity category from mean absolute deviation (gravitational units).
+#' @param vlight Upper bound activity intensity cutpoint for very light activity category from mean absolute deviation (gravitational units).
+#' @param frag.start Hour of the day at which to start calculating fragmentation measures. Use 0 for 24 hours.
+#' @param frag.stop Hour of the day at which to stop calculating fragmentation measures. Use 24 for 24 hours.
 #' @returns data frame with the following variables
 #'
 #' - start: time of starting epoch
@@ -34,11 +37,12 @@
 
 global.activity.summaries <- function(
         data, epoch.seconds = 60,
-        inactive = 0.0074,light = 0.0569){
+        inactive = 0.0074,vlight = 0.0277,light = 0.0571,
+        frag.start = 10, frag.stop = 18){
+
+    # generate time bins
 	data <-
 	data %>%
-
-	# generate time bins
 	dplyr::mutate(
 	    time = lubridate::as_datetime(.data$time),
 		minute.bin = lubridate::hour(.data$time)*60 + lubridate::minute(.data$time),
@@ -46,7 +50,7 @@ global.activity.summaries <- function(
 	    day.bin = lubridate::floor_date(.data$time, unit = lubridate::days(1))
 	)
 
-	# meta data
+	# pull meta data
 	meta <-
 		data %>%
 		dplyr::summarise(
@@ -54,7 +58,7 @@ global.activity.summaries <- function(
 		    end = max(time),
 		    epoch.seconds = difftime(time[2], time[1], units = "secs") %>% as.numeric,
 		    days = difftime(end, start, units = "days") %>% as.numeric,
-		    wear.days = ifelse(sum(wear) ==0, days, sum(wear)*epoch.seconds/60/1440),
+		    wear.days = mean(wear)*days,
 		    wear.bout.count = length(unique(wear.bout)),
 		    .groups = "drop"
 		)
@@ -85,6 +89,7 @@ global.activity.summaries <- function(
 		    n.day = n(),
 		    down = sum(down, na.rm=T)/n.day,
 		    inactiveTime = sum(mad <= inactive, na.rm = T)/n.day,
+		    vlipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    lipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    mvpa = sum(mad > light, na.rm = T)/n.day,
 		    mad = sum(mad, na.rm=T)/n.day,
@@ -92,46 +97,54 @@ global.activity.summaries <- function(
 		dplyr::ungroup() %>%
 	    #summarize across day
 		dplyr::summarise(
-		    mad = mean(mad, na.rm=T),
+		    mad = 1000*sum(mad, na.rm=T)/1440,
 		    down = sum(down, na.rm=T)/60,
 		    inactiveTime = sum(inactiveTime, na.rm = T)/60,
 		    lipa = sum(lipa, na.rm = T)/60,
 		    mvpa = sum(mvpa, na.rm = T)/60)
 
 	# generate day-binned (M10, and L6)
-	# day.level <- data %>%
-	#	dplyr::filter(wear == 1) %>%
-	#	dplyr::group_by(day.bin) %>%
-	#	dplyr::filter(n() > 10*60*60/epoch.seconds)
+	day.level <- data %>%
+		dplyr::filter(wear == 1) %>%
+		dplyr::group_by(day.bin) %>%
+		dplyr::filter(n() > 10*60*60/epoch.seconds) # need at least 10 hours of data
 
-	#if(nrow(day.level)>=10/24*1440){
-	#day.level <-
-	#	dplyr::mutate(mad10 = runstats::RunningMean(mad, W = 10/24*1440, circular = T),
-	#	              mad6 = runstats::RunningMean(mad, W = 6/24*1440, circular = T)) %>%
-	#	dplyr::summarise(M10 = max(mad10),
-	#		     TM10 = which.max(mad10),
-	#		     L6 = min(mad6),
-	#		     TL6 = which.min(mad6),
-	#		     .groups = "drop") %>%
-	#	dplyr::ungroup() %>%
-	#	dplyr::summarise(M10 = mean(M10),
-	#		     TM10 = atan2(mean(sin(TM10*2*pi/1440)), mean(cos(TM10*2*pi/1440))),
-	#		     L6 = mean(L6),
-	#		     TL6 = atan2(mean(sin(TL6*2*pi/1440)), mean(cos(TL6*2*pi/1440))),
-	#		     .groups = "drop")
-	#}else{
-	#	day.level <- tibble(M10 = NA,TM10=NA,L6 = NA, TL6=NA)
-	#}
+	if(nrow(day.level)>=10/24*1440){
+	day.level <-
+		dplyr::mutate(mad10 = runstats::RunningMean(mad, W = 10/24*1440, circular = T),
+		              mad6 = runstats::RunningMean(mad, W = 6/24*1440, circular = T)) %>%
+		dplyr::summarise(M10 = max(mad10),
+			     TM10 = which.max(mad10),
+			     L6 = min(mad6),
+			     TL6 = which.min(mad6),
+			     .groups = "drop") %>%
+		dplyr::ungroup() %>%
+		dplyr::summarise(M10 = mean(M10),
+			     TM10 = atan2(mean(sin(TM10*2*pi/1440)), mean(cos(TM10*2*pi/1440))),
+			     L6 = mean(L6),
+			     TL6 = atan2(mean(sin(TL6*2*pi/1440)), mean(cos(TL6*2*pi/1440))),
+			     .groups = "drop")
+	}else{
+		day.level <- tibble(M10=NA, TM10=NA, L6=NA, TL6=NA)
+	}
 
-	# fragmentation measures
-	# frag <- ActFrag::fragmentation(x = as.integer(data$mad >= 0.012),
-	#		  thresh = 1,
-	#		  w = data$time.group != 0,
-	#		  metrics = "all",
-	#		  bout.length = 1) %>%
-	#	dplyr::as_tibble() %>%
-	#	dplyr::transmute(mean_r, mean_a, SATP, ASTP)
+	#fragmentation measures
+	# subset to window of time delineated by frag.start
+	data <- data %>%
+	    filter(minute.bin >= frag.start*60,
+	           minute.bin < frag.stop*60)
+	 frag <- ActFrag::fragmentation(x = as.integer(data$mad >= inactive),
+			  thresh = 1,
+			  w = data$time.group != 0,
+			  metrics = "all",
+			  bout.length = 1) %>%
+		dplyr::as_tibble() %>%
+		dplyr::rename(
+		    mean_rest_bout = mean_r,
+		    mean_active_bout = mean_a,
+		    satp = SATP,
+		    astp = ASTP)
 
 	# merge all summaries
-	dplyr::bind_cols(meta, global.level, hour.level)
+	dplyr::bind_cols(meta, global.level, hour.level, day.level, frag)
 }
