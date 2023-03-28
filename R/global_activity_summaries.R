@@ -109,23 +109,39 @@ global.activity.summaries <- function(
 		dplyr::group_by(day.bin) %>%
 		dplyr::filter(n() > 10*60*60/epoch.seconds) # need at least 10 hours of data
 
-	if(nrow(day.level)>=10/24*1440){
 	day.level <-
-		dplyr::mutate(mad10 = runstats::RunningMean(mad, W = 10/24*1440, circular = T),
-		              mad6 = runstats::RunningMean(mad, W = 6/24*1440, circular = T)) %>%
-		dplyr::summarise(M10 = max(mad10),
-			     TM10 = which.max(mad10),
-			     L6 = min(mad6),
-			     TL6 = which.min(mad6),
+	    data %>%
+	    group_by(day.bin) %>%
+	    filter(sum(wear) == 1440)
+	if(nrow(day.level) == 0){
+	    day.level <- tibble(M10=NA, TM10=NA, L6=NA, TL6=NA)
+	}else{
+	day.level <-
+	    day.level %>%
+	    arrange(day.bin, minute.bin) %>%
+		dplyr::mutate(
+		    mad10 = runstats::RunningMean(mad, W = 10/24*1440, circular = T),
+		    mad6 = runstats::RunningMean(mad, W = 6/24*1440, circular = T)) %>%
+		dplyr::summarise(M10 = ifelse(n() == 1440, max(mad10), NA),
+			     TM10 = ifelse(n() == 1440, which.max(mad10), NA),
+			     L5 = ifelse(n() == 1440, min(mad5), NA),
+			     TL5 = ifelse(n() == 1440, which.min(mad5), NA),
 			     .groups = "drop") %>%
 		dplyr::ungroup() %>%
-		dplyr::summarise(M10 = mean(M10),
-			     TM10 = atan2(mean(sin(TM10*2*pi/1440)), mean(cos(TM10*2*pi/1440))),
-			     L6 = mean(L6),
-			     TL6 = atan2(mean(sin(TL6*2*pi/1440)), mean(cos(TL6*2*pi/1440))),
-			     .groups = "drop")
-	}else{
-		day.level <- tibble(M10=NA, TM10=NA, L6=NA, TL6=NA)
+		dplyr::summarise(
+		    M10 = ifelse(
+    		    all(is.na(M10)), NA,
+    		    mean(M10, na.rm = T)),
+		    TM10 = ifelse(
+    	         all(is.na(M10)), NA,
+		         atan2(mean(sin(TM10*2*pi/1440)), mean(cos(TM10*2*pi/1440)))), # circular mean
+			 L6 = ifelse(
+			     all(is.na(L6)), NA,
+			     mean(L6, na.rm = T)),
+			 TL6 = ifelse(
+			     all(is.na(L6)), NA,
+			     atan2(mean(sin(TL6*2*pi/1440)), mean(cos(TL6*2*pi/1440)))), # circular mean
+			 .groups = "drop")
 	}
 
 	#fragmentation measures
