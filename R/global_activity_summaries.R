@@ -40,6 +40,8 @@ global.activity.summaries <- function(
         inactive = 0.0074,vlight = 0.0277,light = 0.0571,
         frag.start = 10, frag.stop = 18){
 
+    epoch.seconds = abs(as.numeric(difftime(data$time[1], data$time[2], unit = "secs")))
+
     # generate time bins
 	data <-
 	data %>%
@@ -149,15 +151,48 @@ global.activity.summaries <- function(
 		    L600 = mean(L600, na.rm = T),
 		    L300 = mean(L300, na.rm = T),
 		    L120 = mean(L120, na.rm = T),
-		    TM600 = (atan2(mean(sin(TM600*2*pi/1440)), mean(cos(TM600*2*pi/1440)))/2/pi*1440 + 1440) %%1440, # circular mean
-		    TM300 = (atan2(mean(sin(TM300*2*pi/1440)), mean(cos(TM300*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TM120 = (atan2(mean(sin(TM120*2*pi/1440)), mean(cos(TM120*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TM60 = (atan2(mean(sin(TM60*2*pi/1440)), mean(cos(TM60*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TM30 = (atan2(mean(sin(TM30*2*pi/1440)), mean(cos(TM30*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TM10 = (atan2(mean(sin(TM10*2*pi/1440)), mean(cos(TM10*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TL600 = (atan2(mean(sin(TL600*2*pi/1440)), mean(cos(TL600*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TL300 = (atan2(mean(sin(TL300*2*pi/1440)), mean(cos(TL300*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TL120 = (atan2(mean(sin(TL120*2*pi/1440)), mean(cos(TL120*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
+		    TM600 = (
+		        atan2(
+		            mean(sin(TM600*2*pi/1440),na.rm=T),
+		            mean(cos(TM600*2*pi/1440),na.rm=T)
+		            )/2/pi*1440 + 1440) %%1440, # circular mean
+		    TM300 =
+		        (atan2(
+		            mean(sin(TM300*2*pi/1440),na.rm=T),
+		            mean(cos(TM300*2*pi/1440),na.rm=T)
+		            )/2/pi*1440 + 1440) %%1440,
+		    TM120 =
+		        (atan2(
+		            mean(sin(TM120*2*pi/1440),na.rm=T),
+		            mean(cos(TM120*2*pi/1440),na.rm=T)
+		            )/2/pi*1440 + 1440) %%1440,
+		    TM60 =
+		        (atan2(
+		            mean(sin(TM60*2*pi/1440),na.rm=T),
+		            mean(cos(TM60*2*pi/1440),na.rm=T)
+		            )/2/pi*1440 + 1440) %%1440,
+		    TM30 =
+		        (atan2(
+		            mean(sin(TM30*2*pi/1440),na.rm=T),
+		            mean(cos(TM30*2*pi/1440),na.rm=T))/2/pi*1440 + 1440) %%1440,
+		    TM10 =
+		        (atan2(mean(sin(TM10*2*pi/1440),na.rm=T),
+		               mean(cos(TM10*2*pi/1440),na.rm=T)
+		               )/2/pi*1440 + 1440) %%1440,
+		    TL600 =
+		        (atan2(mean(sin(TL600*2*pi/1440),na.rm=T),
+		               mean(cos(TL600*2*pi/1440),na.rm=T)
+		               )/2/pi*1440 + 1440) %%1440,
+		    TL300 =
+		        (atan2(
+		            mean(sin(TL300*2*pi/1440),na.rm=T),
+		            mean(cos(TL300*2*pi/1440),na.rm=T)
+		            )/2/pi*1440 + 1440) %%1440,
+		    TL120 =
+		        (atan2(
+		            mean(sin(TL120*2*pi/1440),na.rm=T),
+		            mean(cos(TL120*2*pi/1440),na.rm=T)
+		            )/2/pi*1440 + 1440) %%1440,
 		    .groups = "keep")
 
 	#fragmentation measures
@@ -168,7 +203,7 @@ global.activity.summaries <- function(
 	            (minute.bin >= frag.start*60)|(minute.bin < frag.stop*60),
 	            wear, 0)) %>%
 	    dplyr::group_by(day.bin) %>%
-	    group_modify(
+	    dplyr::group_modify(
 	        ~ActFrag::fragmentation(
 	            x = as.integer(.$mad >= inactive),
 	            thresh = 1,
@@ -182,13 +217,13 @@ global.activity.summaries <- function(
 	                satp = SATP,
 	                astp = ASTP)
 	    ) %>%
-	    summarise(
+	    dplyr::ungroup(day.bin) %>%
+	    dplyr::summarise(
 	        satp = mean(satp),
 	        astp = mean(astp),
 	        mean_active_bout = mean(mean_active_bout),
 	        mean_rest_bout = mean(mean_rest_bout),
-	        .groups = "keep") %>%
-	    ungroup(day.bin)
+	        .groups = "keep")
 
 	# merge all summaries
 	dplyr::bind_cols(meta, global.level, hour.level, day.level, frag.data)
