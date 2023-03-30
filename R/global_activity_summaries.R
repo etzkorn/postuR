@@ -60,7 +60,7 @@ global.activity.summaries <- function(
 		    days = difftime(end, start, units = "days") %>% as.numeric,
 		    wear.days = mean(wear)*days,
 		    wear.bout.count = length(unique(wear.bout)),
-		    .groups = "drop"
+		    .groups = "keep"
 		)
 
 	# generate hour-binned summaries
@@ -70,7 +70,7 @@ global.activity.summaries <- function(
 		dplyr::group_by(hour.bin, .add = T) %>%
 		dplyr::summarise(
 		    mad = mean(mad, na.rm=T),
-		    .groups = "drop") %>%
+		    .groups = "keep") %>%
 		dplyr::select(hour.bin, mad) %>%
 		tidyr::gather(key = "var", value = "value", -hour.bin) %>%
 		tidyr::unite(col = var, var, hour.bin) %>%
@@ -92,7 +92,8 @@ global.activity.summaries <- function(
 		    vlipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    lipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    mvpa = sum(mad > light, na.rm = T)/n.day,
-		    mad = sum(mad, na.rm=T)/n.day) %>%
+		    mad = sum(mad, na.rm=T)/n.day,
+		    .groups = "keep") %>%
 		dplyr::ungroup(minute.bin) %>%
 	    #summarize across day
 		dplyr::summarise(
@@ -100,11 +101,12 @@ global.activity.summaries <- function(
 		    down = sum(down, na.rm=T)/60,
 		    inactiveTime = sum(inactiveTime, na.rm = T)/60,
 		    lipa = sum(lipa, na.rm = T)/60,
-		    mvpa = sum(mvpa, na.rm = T)/60)
+		    mvpa = sum(mvpa, na.rm = T)/60,
+		    .groups = "keep")
 
 	# generate day-binned (M10, and L6)
 	day.level <-
-	    day.level %>%
+	    data %>%
 	    arrange(day.bin, minute.bin) %>%
 	    dplyr::group_by(day.bin, .add=T) %>%
 		dplyr::mutate(
@@ -133,9 +135,11 @@ global.activity.summaries <- function(
 		    L120 = min(mad300)*valid,
 		    TL600 = which.min(mad600)*60/epoch.seconds*valid,
 		    TL300 = which.min(mad300)*60/epoch.seconds*valid,
-		    TL120 = which.min(mad120)*60/epoch.seconds*valid) %>%
-		dplyr::ungroup(minute.bin, day.bin) %>%
+		    TL120 = which.min(mad120)*60/epoch.seconds*valid,
+		    .groups = "keep") %>%
+		dplyr::ungroup(day.bin) %>%
 		dplyr::summarise(
+		    valid.days = sum(valid, na.rm=T),
 		    M600 = mean(M600, na.rm = T),
 		    M300 = mean(M300, na.rm = T),
 		    M120 = mean(M120, na.rm = T),
@@ -153,42 +157,38 @@ global.activity.summaries <- function(
 		    TM10 = (atan2(mean(sin(TM10*2*pi/1440)), mean(cos(TM10*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
 		    TL600 = (atan2(mean(sin(TL600*2*pi/1440)), mean(cos(TL600*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
 		    TL300 = (atan2(mean(sin(TL300*2*pi/1440)), mean(cos(TL300*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
-		    TL120 = (atan2(mean(sin(TL120*2*pi/1440)), mean(cos(TL120*2*pi/1440)))/2/pi*1440 + 1440) %%1440)
+		    TL120 = (atan2(mean(sin(TL120*2*pi/1440)), mean(cos(TL120*2*pi/1440)))/2/pi*1440 + 1440) %%1440,
+		    .groups = "keep")
 
 	#fragmentation measures
 	# subset to window of time delineated by frag.start
 	frag.data <- data %>%
-	    filter(minute.bin >= frag.start*60,
-	           minute.bin < frag.stop*60) %>%
-	    group_by(day.bin) %>%
-	    filter(n()>=(60*(frag.stop-frag.start)-60)) %>%
-	    ungroup %>%
-	    select(day.bin, minute.bin, wear, mad)%>%
-	    nest(data = c(minute.bin, wear, mad)) %>%
-	    mutate(
-	        frag = map(
-	            data,
-	            ~ActFrag::fragmentation(
-	                x = as.integer(.$mad >= inactive),
-	                thresh = 1,
-	                w = .$wear == 1,
-	                metrics = "all",
-	                bout.length = 1) %>%
+	    dplyr::mutate(
+	        wear = ifelse(
+	            (minute.bin >= frag.start*60)|(minute.bin < frag.stop*60),
+	            wear, 0)) %>%
+	    dplyr::group_by(day.bin) %>%
+	    group_modify(
+	        ~ActFrag::fragmentation(
+	            x = as.integer(.$mad >= inactive),
+	            thresh = 1,
+	            w = .$wear == 1,
+	            metrics = "all",
+	            bout.length = 1) %>%
 	            dplyr::as_tibble()%>%
 	            dplyr::rename(
-	                    mean_rest_bout = mean_r,
-	                    mean_active_bout = mean_a,
-	                    satp = SATP,
-	                    astp = ASTP)
-	        )
+	                mean_rest_bout = mean_r,
+	                mean_active_bout = mean_a,
+	                satp = SATP,
+	                astp = ASTP)
 	    ) %>%
-	    select(-data) %>%
-	    unnest(frag) %>%
 	    summarise(
 	        satp = mean(satp),
 	        astp = mean(astp),
 	        mean_active_bout = mean(mean_active_bout),
-	        mean_rest_bout = mean(mean_rest_bout))
+	        mean_rest_bout = mean(mean_rest_bout),
+	        .groups = "keep") %>%
+	    ungroup(day.bin)
 
 	# merge all summaries
 	dplyr::bind_cols(meta, global.level, hour.level, day.level, frag.data)
