@@ -69,15 +69,12 @@ global.activity.summaries <- function(
 	hour.level <-
 		data %>%
 		dplyr::filter(wear == 1) %>%
+	    dplyr::mutate(hour.bin = paste("mad", hour.bin, sep = "_")) %>%
 		dplyr::group_by(hour.bin, .add = T) %>%
 		dplyr::summarise(
 		    mad = mean(mad, na.rm=T),
 		    .groups = "keep") %>%
-		dplyr::select(hour.bin, mad) %>%
-		tidyr::gather(key = "var", value = "value", -hour.bin) %>%
-		tidyr::unite(col = var, var, hour.bin) %>%
-		dplyr::mutate(var = factor(var, ordered = T))%>%
-		tidyr::spread(key = var, value = value)%>%
+		tidyr::pivot_wider(names_from = "hour.bin", values_from = "mad") %>%
 		dplyr::select(mad_0, mad_2, mad_4, mad_6, mad_8, mad_10, mad_12,
 		       mad_14, mad_16, mad_18, mad_20, mad_22)
 
@@ -99,11 +96,11 @@ global.activity.summaries <- function(
 		dplyr::ungroup(minute.bin) %>%
 	    #summarize across day
 		dplyr::summarise(
-		    mad = 1000*sum(mad, na.rm=T)/1440,
-		    down = sum(down, na.rm=T)/60,
-		    inactiveTime = sum(inactiveTime, na.rm = T)/60,
-		    lipa = sum(lipa, na.rm = T)/60,
-		    mvpa = sum(mvpa, na.rm = T)/60,
+		    mad = 1000*sum(mad, na.rm=T)/1440*60/epoch.seconds,
+		    down = sum(down, na.rm=T)/60*60/epoch.seconds,
+		    inactiveTime = sum(inactiveTime, na.rm = T)/60*60/epoch.seconds,
+		    lipa = sum(lipa, na.rm = T)/60*60/epoch.seconds,
+		    mvpa = sum(mvpa, na.rm = T)/60*60/epoch.seconds,
 		    .groups = "keep")
 
 	# generate day-binned (M10, and L6)
@@ -141,7 +138,6 @@ global.activity.summaries <- function(
 		    .groups = "keep") %>%
 		dplyr::ungroup(day.bin) %>%
 		dplyr::summarise(
-		    valid.days = sum(valid, na.rm=T),
 		    M600 = mean(M600, na.rm = T),
 		    M300 = mean(M300, na.rm = T),
 		    M120 = mean(M120, na.rm = T),
@@ -202,7 +198,7 @@ global.activity.summaries <- function(
 	        wear = ifelse(
 	            (minute.bin >= frag.start*60)|(minute.bin < frag.stop*60),
 	            wear, 0)) %>%
-	    dplyr::group_by(day.bin) %>%
+	    dplyr::group_by(day.bin,.add = T) %>%
 	    dplyr::group_modify(
 	        ~ActFrag::fragmentation(
 	            x = as.integer(.$mad >= inactive),
@@ -226,5 +222,13 @@ global.activity.summaries <- function(
 	        .groups = "keep")
 
 	# merge all summaries
-	dplyr::bind_cols(meta, global.level, hour.level, day.level, frag.data)
+
+	if(dplyr::is.grouped_df(meta)){
+	    full_join(meta, global.level, keep = F) %>%
+	        full_join(hour.level, keep = F) %>%
+	        full_join(day.level, keep = F) %>%
+	        full_join(frag.data, keep = F)
+	}else{
+	    dplyr::bind_cols(meta, global.level, hour.level, day.level, frag.data)
+	}
 }
