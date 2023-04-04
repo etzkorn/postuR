@@ -1,19 +1,73 @@
 citHeader("To cite postuR in publications use:")
 
 citEntry(
-  entry    = "R Package",
-  title    = "postuR: Posture Classification and Activity Measures from Triaxial Accelerometers in ECG Patches",
+  entry    = "Misc",
+  title    = "postuR: An R Package for Posture Classification and Activity Measures from Triaxial Accelerometers in ECG Patches",
   author   = "Lacey H Etzkorn",
-  journal  = ,
   year     = "2020",
-  volume   = ,
-  number   = ,
-  pages    = ,
   url      = "https://github.com/etzkorn/postuR",
-  textVersion = paste0("
-  Etzkorn, Lacey H (2020).
-  'postuR: Posture Classification and Activity Measures from Triaxial Accelerometers in ECG Patches.
-  R package version',",
-  packageVersion("postuR"),
-  ".https://github.com/etzkorn/postuR")
+  textVersion = paste0(
+    # Package Citation
+    "Etzkorn, Lacey H (2020). ",
+    "'postuR:  An R Package for Posture Classification and Activity Measures from Triaxial Accelerometers in ECG Patches'. ",
+    "R package version ",
+    packageVersion("postuR"),
+    ". URL: https://github.com/etzkorn/postuR."
+))
+
+citEntry(
+entry = "Article",
+  title="Classification of free-living body posture with ECG patch accelerometers: application to the multicenter AIDS cohort study",
+  author="Etzkorn, Lacey H and Heravi, Amir S and Wu, Katherine C and Post, Wendy S and Urbanek, Jacek and Crainiceanu, Ciprian",
+  journal="bioRxiv",
+  pages="2021--07",
+  year="2021",
+  publisher="Cold Spring Harbor Laboratory",
+  textVersion = paste0(
+    # Publication Citation
+    "Etzkorn LH, Heravi AS, Wu KC, Post WS, Urbanek J, ",
+    "Crainiceanu C.",
+    " Classification of free-living body posture with ECG patch accelerometers:",
+    " application to the multicenter AIDS cohort study.",
+    " bioRxiv. 2021 Jul 16:2021-07."
+  )
+)
+
+citEntry(
+entry = "Article",
+  title="HIV infection is associated with variability in ventricular repolarization: the multicenter AIDS cohort study (MACS)",
+  author="Heravi, Amir S and Etzkorn, Lacey H and Urbanek, Jacek K and Crainiceanu, Ciprian M and Punjabi, Naresh M and Ashikaga, Hiroshi and Brown, Todd T and Budoff, Matthew J and D’Souza, Gypsyamber and Magnani, Jared W and others",
+  journal="Circulation",
+  volume="141",
+  number="3",
+  pages="176--187",
+  year="2020",
+  publisher="Am Heart Assoc",
+    textVersion = paste0(
+        # Publication Citation
+    "Heravi AS, Etzkorn LH, Urbanek JK, Crainiceanu CM, ",
+    "Punjabi NM, Ashikaga H, Brown TT, Budoff MJ, D’Souza G, ",
+    "Magnani JW, Palella Jr FJ. ",
+    "HIV infection is associated with variability in ventricular repolarization: the multicenter AIDS cohort study (MACS). ",
+    "Circulation. 2020 Jan 21;141(3):176-87."
+)
+)
+
+citEntry(
+entry = "Article",
+  title="Patterns of objectively measured physical activity differ between men living with and without HIV",
+  author="Etzkorn, Lacey H and Liu, Fangyu and Urbanek, Jacek K and Heravi, Amir S and Magnani, Jared W and Plankey, Michael W and Margolich, Joseph B and Witt, Mallory D and Palella, Frank J and Haberlen, Sabina A and others",
+  journal="AIDS",
+  volume="36",
+  number="11",
+  pages="1553--1562",
+  year="2022",
+  publisher="Wolters Kluwer",
+  textVersion = paste0(
+      # Publication Citation
+    "Etzkorn LH, Liu F, Urbanek JK, Heravi AS, Magnani JW, ",
+    "Plankey MW, Margolich JB, Witt MD, Palella FJ, Haberlen SA, Wu KC. ",
+    "Patterns of objectively measured physical activity differ between men living with and without HIV. ",
+    "AIDS. 2022 Sep 1;36(11):1553-62."
+  )
 )
