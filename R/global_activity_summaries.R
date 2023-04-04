@@ -94,7 +94,6 @@ global.activity.summaries <- function(
 		    n.day = n(),
 		    down = sum(down, na.rm=T)/n.day,
 		    inactiveTime = sum(mad <= inactive, na.rm = T)/n.day,
-		    vlipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    lipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    mvpa = sum(mad > light, na.rm = T)/n.day,
 		    mad = sum(mad, na.rm=T)/n.day,
