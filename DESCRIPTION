@@ -15,7 +15,7 @@ LazyData: false
 RoxygenNote: 7.1.1
 Depends: 
     R (>= 2.10),
-    tidyverse (>= 2.0),
+    tidyverse (>= 1.3),
     lubridate (>= 1.9),
     runstats (>= 1.1),
     accelerometry (>= 3.1)
