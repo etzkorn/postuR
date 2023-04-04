@@ -1,0 +1,19 @@
+citHeader("To cite postuR in publications use:")
+
+citEntry(
+  entry    = "R Package",
+  title    = "postuR: Posture Classification and Activity Measures from Triaxial Accelerometers in ECG Patches",
+  author   = "Lacey H Etzkorn",
+  journal  = ,
+  year     = "2020",
+  volume   = ,
+  number   = ,
+  pages    = ,
+  url      = "https://github.com/etzkorn/postuR",
+  textVersion = paste0("
+  Etzkorn, Lacey H (2020).
+  'postuR: Posture Classification and Activity Measures from Triaxial Accelerometers in ECG Patches.
+  R package version',",
+  packageVersion("postuR"),
+  ".https://github.com/etzkorn/postuR")
+)

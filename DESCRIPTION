@@ -1,5 +1,5 @@
 Package: postuR
-Title: Posture Classification and Activity Measures for Zio XT (trademark iRhythm) Patch Accelerometer.
+Title: Posture Classification and Activity Measures for Triaxial Accelerometers in ECG Patches.
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Lacey",
