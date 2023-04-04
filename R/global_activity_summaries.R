@@ -1,6 +1,12 @@
 #' @title Calculate Common Activity Summaries from Summarised Data
-#' @description Takes a data frame with activity measurements (MAD), and time. Returns a data frame with one row with relevant global activity summaries.
-#' @param data A data frame with epoch-level activity summaries. This function is designed to input the data frame returned from Rtbeat::process.zacl directly. If not, variables should include time (class dttm), mad (Vector magnitude counts), wear (indicator for whether the device was actually worn during a given period), and time.group (a count variable indicating the distinct wear bout).
+#' @description Takes a data frame with activity measurements (MAD), and time.
+#' Returns a data frame with one row with relevant global activity summaries.
+#' This function was validated against `arctools::activity_stats`.
+#' @param data A data frame with epoch-level activity summaries.
+#' This function is designed to input the data frame returned from postuR::process.zacl directly.
+#' If not, variables should include time (class dttm), mad (mean amplitude deviation),
+#' wear (indicator for whether the device was actually worn during a given period),
+#' and time.group (a count variable indicating the distinct wear bout).
 #' @param epoch.seconds How many seconds does each row in the "data" argument correspond to?
 #' @param inactive Upper bound activity intensity cutpoint for inactivity category from mean absolute deviation (gravitational units).
 #' @param light Upper bound activity intensity cutpoint for light activity category from mean absolute deviation (gravitational units).
