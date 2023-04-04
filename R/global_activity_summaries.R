@@ -112,8 +112,13 @@ global.activity.summaries <- function(
 	# generate day-binned (M10, and L6)
 	day.level <-
 	    data %>%
-	    arrange(day.bin, minute.bin) %>%
+	    dplyr::select(day.bin, minute.bin, mad, wear) %>%
 	    dplyr::group_by(day.bin, .add=T) %>%
+	    dplyr::filter(sum(wear, na.rm=T)>=1440*60/epoch.seconds) %>%
+	    dplyr::group_modify(
+	        ~full_join(tibble(minute.bin = 0:1439), ., by = "minute.bin")
+	    ) %>%
+	    dplyr::arrange(day.bin, minute.bin) %>%
 		dplyr::mutate(
 		    mad600 = runstats::RunningMean(mad, W = 600*60/epoch.seconds, circular = T),
 		    mad300 = runstats::RunningMean(mad, W = 300*60/epoch.seconds, circular = T),
@@ -122,7 +127,7 @@ global.activity.summaries <- function(
 		    mad30 = runstats::RunningMean(mad, W = 30*60/epoch.seconds, circular = T),
 		    mad10 = runstats::RunningMean(mad, W = 10*60/epoch.seconds, circular = T)) %>%
 		dplyr::summarise(
-		    valid = ifelse(sum(wear)==1440*60/epoch.seconds, 1 , NA),
+		    valid = ifelse(sum(wear, na.rm=T)==1440*60/epoch.seconds, 1 , NA),
 		    M600 = max(mad600)*valid,
 		    M300 = max(mad300)*valid,
 		    M120 = max(mad120)*valid,

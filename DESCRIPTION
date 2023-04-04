@@ -13,20 +13,17 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: false
 RoxygenNote: 7.1.1
-Depends: R (>= 2.10)
+Depends: 
+    R (>= 2.10),
+    tidyverse (>= 2.0),
+    lubridate (>= 1.9),
+    runstats (>= 1.1),
+    accelerometry (>= 3.1)
 Imports: 
-    tidyverse,
-    dplyr,
-    lubridate,
     meanShiftR,
-    zoo,
+    fastcluster,
     pracma,
-    purrr,
-    accelerometry,
-    tidyr,
-    rlang, 
     stringr,
-    fastcluster
 Suggests: 
     knitr,
     rmarkdown
