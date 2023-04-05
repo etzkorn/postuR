@@ -14,9 +14,8 @@ mad <- function(x, y, z, roll = FALSE, window = 94){
 		mad.out <- mean( abs( postuR:::euclid.norm(x,y,z) - m) )
 		return(mad.out)
 	}else if(roll == TRUE){
-		m0 <- mean(postuR:::euclid.norm(x,y,z))
-		m <- zoo::rollmean(postuR:::euclid.norm(x,y,z), k = window, fill = m0)
-		mad <- zoo::rollmean( abs( postuR:::euclid.norm(x,y,z) - m), k = window, fill = 0)
+		m <- runstats::RunningMean(postuR:::euclid.norm(x,y,z), W = window,circular = F )
+		mad <- runstats::RunningMean( abs( postuR:::euclid.norm(x,y,z) - m), W = window,circular = F)
 		return(mad)
 	}
 }
