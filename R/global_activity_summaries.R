@@ -33,7 +33,7 @@
 #'
 #' - down: daily hours of time spent lying down
 #'
-#' - inactiveTime: daily hours of time spent inactive (mad <= inactive)
+#' - sst: daily hours of time spent sleep or sedentary (mad <= inactive)
 #'
 #' - lipa: daily hours of time spent in light physical activity (inactive < mad <= light)
 #'
@@ -98,7 +98,7 @@ global.activity.summaries <- function(
 		dplyr::summarise(
 		    n.day = n(),
 		    down = sum(down, na.rm=T)/n.day,
-		    inactiveTime = sum(mad <= inactive, na.rm = T)/n.day,
+		    sst = sum(mad <= inactive, na.rm = T)/n.day,
 		    lipa = sum(mad <= light & mad > inactive, na.rm = T)/n.day,
 		    mvpa = sum(mad > light, na.rm = T)/n.day,
 		    mad = sum(mad, na.rm=T)/n.day,
@@ -108,7 +108,7 @@ global.activity.summaries <- function(
 		dplyr::summarise(
 		    mad = sum(mad, na.rm=T)/1440*60/epoch.seconds,
 		    down = sum(down, na.rm=T)/60*60/epoch.seconds,
-		    inactiveTime = sum(inactiveTime, na.rm = T)/60*60/epoch.seconds,
+		    sst = sum(sst, na.rm = T)/60*60/epoch.seconds,
 		    lipa = sum(lipa, na.rm = T)/60*60/epoch.seconds,
 		    mvpa = sum(mvpa, na.rm = T)/60*60/epoch.seconds,
 		    .groups = "keep")
@@ -237,7 +237,6 @@ global.activity.summaries <- function(
 	        .groups = "keep")
 
 	# merge all summaries
-
 	if(dplyr::is.grouped_df(meta)){
 	    full_join(meta, global.level, keep = F) %>%
 	        full_join(hour.level, keep = F) %>%

@@ -65,9 +65,9 @@ if epoch.seconds=300).
 
 \item{theta}{estimated inclination of the chest during the epoch.}
 
-\item{mad}{Mean absolute deviation, a measure of activity intensity during the epoch.}
+\item{mad}{Mean absolute deviation, a measure of activity intensity during the epoch (milli-gravitational units).}
 
-\item{x,y,z}{Median accelerations measured along each axis during an epoch.}
+\item{x,y,z}{Median accelerations measured along each axis during an epoch (gravitational units).}
 }
 \description{
 Takes the raw Zio accelerometer file and processes it into adjacent intervals of length epoch.seconds.
