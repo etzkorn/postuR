@@ -7,5 +7,4 @@
 #' @source Data in this sample were collected by the Multicenter AIDS Cohort Study (MACS).
 #' All dates were changed.
 #' The MACS website is located at http://aidscohortstudy.org/.
-#' @export
 "sample.minutes"
