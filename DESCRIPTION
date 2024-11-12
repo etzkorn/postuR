@@ -1,18 +1,21 @@
 Package: postuR
 Title: Posture Classification and Activity Measures for Triaxial Accelerometers in ECG Patches.
-Version: 0.0.0.9000
+Version: 0.0.1.0000
 Authors@R: 
-    person(given = "Lacey",
-           family = "Etzkorn",
-           role = c("aut", "cre"), 
-           email = "etzkornlacey15@gmail.com",
-           comment = c(ORCID = "0000-0001-7107-2763"))
-Description: This package includes functions to process accelerometer data from the Zio XT (trademark iRhythm) Patch. 
+    person(
+        given = "Lacey",
+        family = "Etzkorn",
+        role = c("aut", "cre"), 
+        email = "etzkornlacey15@gmail.com",
+        comment = c(ORCID = "0000-0001-7107-2763")
+    )
+Description: 
+    This package includes functions to process accelerometer data from the Zio XT (trademark iRhythm) Patch. 
 	It creates summary measures of actigraphy and posture.
 License: GPL-3
 Encoding: UTF-8
 LazyData: false
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 Depends: 
     R (>= 2.10),
     tidyverse (>= 1.3),

@@ -12,4 +12,5 @@
 #' @source Data in this sample were collected by the Multicenter AIDS Cohort Study (MACS).
 #' Dates were changed.
 #' The MACS website is located at http://aidscohortstudy.org/.
+#' @export
 "sample.accel"
