@@ -7,9 +7,9 @@
 global.activity.summaries(
   data,
   epoch.seconds = 60,
-  inactive = 0.0074,
-  vlight = 0.0277,
-  light = 0.0571,
+  inactive = 9.041,
+  vlight = 28.187,
+  light = 58.083,
   frag.start = 10,
   frag.stop = 18
 )
@@ -23,11 +23,11 @@ and time.group (a count variable indicating the distinct wear bout).}
 
 \item{epoch.seconds}{How many seconds does each row in the "data" argument correspond to?}
 
-\item{inactive}{Upper bound activity intensity cutpoint for inactivity category from mean absolute deviation (gravitational units).}
+\item{inactive}{Upper bound activity intensity cutpoint for inactivity category from mean absolute deviation (milli-gravitational units).}
 
-\item{vlight}{Upper bound activity intensity cutpoint for very light activity category from mean absolute deviation (gravitational units).}
+\item{vlight}{Upper bound activity intensity cutpoint for very light activity category from mean absolute deviation (milli-gravitational units).}
 
-\item{light}{Upper bound activity intensity cutpoint for light activity category from mean absolute deviation (gravitational units).}
+\item{light}{Upper bound activity intensity cutpoint for light activity category from mean absolute deviation (milli-gravitational units).}
 
 \item{frag.start}{Hour of the day at which to start calculating fragmentation measures. Use 0 for 24 hours.}
 

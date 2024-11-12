@@ -8,9 +8,9 @@
 #' wear (indicator for whether the device was actually worn during a given period),
 #' and time.group (a count variable indicating the distinct wear bout).
 #' @param epoch.seconds How many seconds does each row in the "data" argument correspond to?
-#' @param inactive Upper bound activity intensity cutpoint for inactivity category from mean absolute deviation (gravitational units).
-#' @param light Upper bound activity intensity cutpoint for light activity category from mean absolute deviation (gravitational units).
-#' @param vlight Upper bound activity intensity cutpoint for very light activity category from mean absolute deviation (gravitational units).
+#' @param inactive Upper bound activity intensity cutpoint for inactivity category from mean absolute deviation (milli-gravitational units).
+#' @param light Upper bound activity intensity cutpoint for light activity category from mean absolute deviation (milli-gravitational units).
+#' @param vlight Upper bound activity intensity cutpoint for very light activity category from mean absolute deviation (milli-gravitational units).
 #' @param frag.start Hour of the day at which to start calculating fragmentation measures. Use 0 for 24 hours.
 #' @param frag.stop Hour of the day at which to stop calculating fragmentation measures. Use 24 for 24 hours.
 #' @returns data frame with the following variables
@@ -42,9 +42,14 @@
 #' @export
 
 global.activity.summaries <- function(
-        data, epoch.seconds = 60,
-        inactive = 0.0074,vlight = 0.0277,light = 0.0571,
-        frag.start = 10, frag.stop = 18){
+        data,
+        epoch.seconds = 60,
+        inactive = 9.041,
+        vlight = 28.187,
+        light = 58.083,
+        frag.start = 10,
+        frag.stop = 18
+){
 
     epoch.seconds = abs(as.numeric(difftime(data$time[1], data$time[2], unit = "secs")))
 
@@ -101,7 +106,7 @@ global.activity.summaries <- function(
 		dplyr::ungroup(minute.bin) %>%
 	    #summarize across day
 		dplyr::summarise(
-		    mad = 1000*sum(mad, na.rm=T)/1440*60/epoch.seconds,
+		    mad = sum(mad, na.rm=T)/1440*60/epoch.seconds,
 		    down = sum(down, na.rm=T)/60*60/epoch.seconds,
 		    inactiveTime = sum(inactiveTime, na.rm = T)/60*60/epoch.seconds,
 		    lipa = sum(lipa, na.rm = T)/60*60/epoch.seconds,

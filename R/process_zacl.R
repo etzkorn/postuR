@@ -35,9 +35,9 @@
 #'
 #' \item{theta}{estimated inclination of the chest during the epoch.}
 #'
-#' \item{mad}{Mean absolute deviation, a measure of activity intensity during the epoch.}
+#' \item{mad}{Mean absolute deviation, a measure of activity intensity during the epoch (milli-gravitational units).}
 #'
-#' \item{x,y,z}{Median accelerations measured along each axis during an epoch.}
+#' \item{x,y,z}{Median accelerations measured along each axis during an epoch (gravitational units).}
 #'
 #' @export
 process.zacl <- function(
@@ -212,9 +212,11 @@ process.zacl <- function(
               dplyr::select(-data, -top) %>%
               tidyr::unnest(c(min.data, rdata, wear.bout)) %>%
               dplyr::arrange(time)%>%
-              dplyr::mutate(wear = as.numeric(wear.bout!=0),
-                            down = as.numeric(down0)) %>%
-              dplyr::select(-down0)
+              dplyr::mutate(
+                  wear = as.numeric(wear.bout!=0),
+                  down = as.numeric(down0),
+                  mad = 1000*mad
+            ) %>% dplyr::select(-down0)
       }else{
           # adjust recumbent indicator using clusters
           min.data %>%
@@ -223,6 +225,7 @@ process.zacl <- function(
                   ~ dplyr::mutate(.x, cluster = .y)%>%
                       dplyr::group_by(cluster) %>%
                       dplyr:: mutate(
+                          mad = 1000*mad,
                           p.down = mean(down0),
                           down = as.integer(p.down > .5 | down0 == 1)) %>%
                       dplyr::ungroup() %>%
