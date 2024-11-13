@@ -220,12 +220,12 @@ global.activity.summaries <- function(
 
 	#Interdaily stability measures
 	interdaily.stability = tibble(
-	    is_60 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 60, epoch_seconds = epoch_seconds),
-	    is_30 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 30, epoch_seconds = epoch_seconds),
-	    is_20 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 20, epoch_seconds = epoch_seconds),
-	    is_10 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 10, epoch_seconds = epoch_seconds),
-	    is_05 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 5, epoch_seconds = epoch_seconds),
-	    is_01 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 1, epoch_seconds = epoch_seconds)
+	    is_60 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 60, epoch_seconds = epoch.seconds),
+	    is_30 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 30, epoch_seconds = epoch.seconds),
+	    is_20 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 20, epoch_seconds = epoch.seconds),
+	    is_10 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 10, epoch_seconds = epoch.seconds),
+	    is_05 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 5, epoch_seconds = epoch.seconds),
+	    is_01 = is_alldays(activity = data$mad, time = data$time, bin_epochs = 1, epoch_seconds = epoch.seconds)
 	)
 
 	#fragmentation measures
