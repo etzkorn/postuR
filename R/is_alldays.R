@@ -4,11 +4,11 @@
 #' a given number of epochs (usually minutes) per bin.
 #' @param activity vector representing timeseries across all days of activity data.
 #' Each entry corresponds to one epoch.
-#' @param timestamp same length as activity vector.
+#' @param time same length as activity vector.
 #' @param bin_epochs number of epochs per bin to collapse activity into before performing
 #' IS formula.
 
-is_alldays <- function(activity, timestamp, bin_epochs, epoch_seconds){
+is_alldays <- function(activity, time, bin_epochs, epoch_seconds){
 
     if(round(epoch_seconds * bin_epochs/60) != (epoch_seconds * bin_epochs/60)){
         stop("bin_epochs not compatible with epoch duration.")
@@ -18,11 +18,11 @@ is_alldays <- function(activity, timestamp, bin_epochs, epoch_seconds){
     daily_bins = 1440/bin_minutes
 
     df.out <- tibble(
-        timestamp = timestamp,
+        time = time,
         activity = activity
     ) %>% mutate(
-        date = floor_date(timestamp, unit = "days"),
-        bin = floor_date(timestamp, unit = minutes(bin_minutes)),
+        date = floor_date(time, unit = "days"),
+        bin = floor_date(time, unit = minutes(bin_minutes)),
         bin_group = hour(bin)*60 + minute(bin)
     ) %>% group_by(
         date, bin, bin_group
@@ -55,5 +55,3 @@ is_alldays <- function(activity, timestamp, bin_epochs, epoch_seconds){
 
     return(df.out)
 }
-
-is_alldays(activity, timestamp, 10, 60)

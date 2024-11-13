@@ -54,7 +54,7 @@ data frame with the following variables
 
 - down: daily hours of time spent lying down
 
-- inactiveTime: daily hours of time spent inactive (mad <= inactive)
+- sst: daily hours of time spent sleep or sedentary (mad <= inactive)
 
 - lipa: daily hours of time spent in light physical activity (inactive < mad <= light)
 
