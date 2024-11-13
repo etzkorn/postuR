@@ -150,6 +150,12 @@ global.activity.summaries <- function(
 		    TL600 = which.min(mad600)*60/epoch.seconds*valid,
 		    TL300 = which.min(mad300)*60/epoch.seconds*valid,
 		    TL120 = which.min(mad120)*60/epoch.seconds*valid,
+		    iv_60 = iv_oneday(mad, 60),
+		    iv_30 = iv_oneday(mad, 30),
+		    iv_20 = iv_oneday(mad, 20),
+		    iv_10 = iv_oneday(mad, 10),
+		    iv_05 = iv_oneday(mad, 5),
+		    iv_01 = iv_oneday(mad, 1),
 		    .groups = "keep") %>%
 		dplyr::ungroup(day.bin) %>%
 		dplyr::summarise(
@@ -204,7 +210,23 @@ global.activity.summaries <- function(
 		            mean(sin(TL120*2*pi/1440),na.rm=T),
 		            mean(cos(TL120*2*pi/1440),na.rm=T)
 		            )/2/pi*1440 + 1440) %%1440,
+		    iv_60 = mean(iv_60),
+		    iv_30 = mean(iv_30),
+		    iv_20 = mean(iv_20),
+		    iv_10 = mean(iv_10),
+		    iv_05 = mean(iv_05),
+		    iv_01 = mean(iv_01),
 		    .groups = "keep")
+
+	#Interdaily stability measures
+	interdaily.stability = tibble(
+	    is_60 = is_alldays(activity = data$mad, timestamp = data$time, bin_epochs = 60, epoch_seconds = epoch_seconds),
+	    is_30 = is_alldays(activity = data$mad, timestamp = data$time, bin_epochs = 30, epoch_seconds = epoch_seconds),
+	    is_20 = is_alldays(activity = data$mad, timestamp = data$time, bin_epochs = 20, epoch_seconds = epoch_seconds),
+	    is_10 = is_alldays(activity = data$mad, timestamp = data$time, bin_epochs = 10, epoch_seconds = epoch_seconds),
+	    is_05 = is_alldays(activity = data$mad, timestamp = data$time, bin_epochs = 5, epoch_seconds = epoch_seconds),
+	    is_01 = is_alldays(activity = data$mad, timestamp = data$time, bin_epochs = 1, epoch_seconds = epoch_seconds)
+	)
 
 	#fragmentation measures
 	# subset to window of time delineated by frag.start
@@ -243,6 +265,6 @@ global.activity.summaries <- function(
 	        full_join(day.level, keep = F) %>%
 	        full_join(frag.data, keep = F)
 	}else{
-	    dplyr::bind_cols(meta, global.level, hour.level, day.level, frag.data)
+	    dplyr::bind_cols(meta, global.level, hour.level, day.level, interdaily.stability, frag.data)
 	}
 }

@@ -4,7 +4,7 @@
 #' a given number of epochs (usually minutes) per bin.
 #' @param activity_oneday vector representing timeseries for one day of activity data.
 #' Each entry corresponds to one epoch.
-#' @param bin_epochs number of epochs to collapse activity_oneday into before performing
+#' @param bin_epochs number of epochs per bin to collapse activity_oneday into before performing
 #' IV formula.
 
 iv_oneday <- function(activity_oneday, bin_epochs){
